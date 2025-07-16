@@ -9,6 +9,30 @@ timetable_file = 'timetable.csv'
 calendar_file = 'academic_calendar.csv'
 data_file = 'attendance_data.csv'
 
+# --- Streamlit Cloud file upload support ---
+# If timetable or calendar CSVs are missing, prompt user to upload them
+missing_files = []
+for f in [timetable_file, calendar_file]:
+    if not os.path.exists(f):
+        missing_files.append(f)
+if missing_files:
+    st.error(f"Missing required file(s): {', '.join(missing_files)}. Please upload them below.")
+    for f in missing_files:
+        uploaded = st.file_uploader(f"Upload {f}", type=["csv"], key=f)
+        if uploaded:
+            with open(f, "wb") as out:
+                out.write(uploaded.read())
+            st.success(f"Uploaded {f}. Please reload the app.")
+    st.stop()
+
+# Initialize attendance_data.csv if not present
+def initialize_attendance_csv(subjects):
+    if not os.path.exists(data_file):
+        df = pd.DataFrame([
+            {'subject': s, 'present': 0, 'absent': 0} for s in subjects
+        ])
+        df.to_csv(data_file, index=False)
+
 # Load timetable
 timetable = pd.read_csv(timetable_file)
 subjects = set()
@@ -18,6 +42,8 @@ for day in timetable.columns[1:]:
         if s and s.lower() != 'break':
             subjects.add(s)
 subjects = sorted(subjects)
+
+initialize_attendance_csv(subjects)
 
 # Load academic calendar
 dates_df = pd.read_csv(calendar_file)
