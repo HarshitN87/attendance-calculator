@@ -163,13 +163,15 @@ for idx, subject in enumerate(subjects):
                 if present + absent < total:
                     attendance_data[subject]['present'] += 1
                     save_attendance(attendance_data)
-                    st.experimental_rerun()
+                    st.rerun()
+
         with c2:
             if st.button("Absent", key=f"absent_{subject}"):
                 if present + absent < total:
                     attendance_data[subject]['absent'] += 1
                     save_attendance(attendance_data)
-                    st.experimental_rerun()
+                    st.rerun()
+
         st.write(f"Attended: {present} / {total}")
         if percent >= 75:
             can_miss = classes_can_miss(present, absent, total)
@@ -219,4 +221,4 @@ if overall_percent < 75:
 if st.button("Reset All Attendance Data"):
     attendance_data = {s: {'present': 0, 'absent': 0} for s in subjects}
     save_attendance(attendance_data)
-    st.experimental_rerun() 
+    st.rerun()
