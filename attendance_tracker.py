@@ -64,6 +64,9 @@ for s in subjects:
         total = 0
         for day in subject_days[s]:
             total += weekday_counts.get(day, 0)
+        # Double the amount of classes for TCS-502
+        if s.replace(' ', '').upper().startswith('TCS-502'):
+            total *= 2
         subject_total_classes[s] = total
 
 def load_attendance():
@@ -154,12 +157,38 @@ for idx, subject in enumerate(subjects):
 
 # Overall attendance
 st.header("Overall Attendance")
-total_present = sum(attendance_data[s]['present'] for s in subjects)
-total_absent = sum(attendance_data[s]['absent'] for s in subjects)
-total_classes = sum(subject_total_classes[s] for s in subjects)
+total_present = 0
+total_absent = 0
+total_classes = 0
+for s in subjects:
+    present = attendance_data[s]['present']
+    absent = attendance_data[s]['absent']
+    total = subject_total_classes[s]
+    if 'lab' in s.lower():
+        total_present += present * 2
+        total_absent += absent * 2
+        total_classes += total * 2
+    else:
+        total_present += present
+        total_absent += absent
+        total_classes += total
 overall_percent = attendance_percentage(total_present, total_absent, total_classes)
 st.progress(overall_percent / 100, text=f"{overall_percent:.2f}%")
 st.write(f"Total Attended: {total_present} / {total_classes}")
+
+# Add: How many more classes to attend to reach 75% overall
+remaining = total_classes - (total_present + total_absent)
+need = 0
+if overall_percent < 75:
+    while (total_present + need) <= total_classes:
+        perc = ((total_present + need) / (total_present + total_absent + need)) * 100 if (total_present + total_absent + need) > 0 else 0
+        if perc >= 75:
+            break
+        need += 1
+    if (total_present + need) > total_classes:
+        st.error("Not possible to reach 75% overall with remaining classes.")
+    else:
+        st.warning(f"Attend next {need} class(es) to reach 75% overall attendance.")
 
 if st.button("Reset All Attendance Data"):
     attendance_data = {s: {'present': 0, 'absent': 0} for s in subjects}
